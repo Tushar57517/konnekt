@@ -1,0 +1,20 @@
+{
+  "name": "konnekt",
+  "private": true,
+  "scripts": {
+    "start": "turbo run start",
+    "dev": "turbo run dev"
+  },
+  "devDependencies": {
+    "prettier": "^3.6.2",
+    "turbo": "^2.5.5"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "packageManager": "npm@10.9.2",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ]
+}
