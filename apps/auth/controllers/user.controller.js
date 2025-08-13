@@ -1,6 +1,7 @@
 import User from "../models/user.model.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import userQueue from "../queues/userQueue.js";
 
 export const register = async (req, res) => {
   const { email, password } = req.body;
@@ -14,7 +15,10 @@ export const register = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    await User.create({ email, password: hashedPassword });
+    const user = await User.create({ email, password: hashedPassword });
+
+    const payload = {userId: user._id, email: email}
+    await userQueue.add("init new profile", payload)
     return res.status(200).json({ message: "user registered successfully" });
   } catch (error) {
     console.log(error.message);

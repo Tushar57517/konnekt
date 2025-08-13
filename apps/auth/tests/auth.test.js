@@ -12,9 +12,14 @@ jest.unstable_mockModule("bcrypt", () => ({
   default: { hash: jest.fn() },
 }));
 
+jest.unstable_mockModule("../queues/userQueue.js", () => ({
+  default: { add: jest.fn().mockResolvedValue(true) },
+}));
+
 const bcrypt = (await import("bcrypt")).default;
 const app = (await import("../app.js")).default;
 const User = (await import("../models/user.model.js")).default;
+const userQueue = (await import("../queues/userQueue.js")).default;
 
 describe("POST api/auth/register", () => {
   beforeEach(() => {
@@ -51,9 +56,19 @@ describe("POST api/auth/register", () => {
   it("returns 200 when user registered ssuccessfully", async () => {
     const payload = { email: "test@email.com", password: "1234" };
 
+    User.findOne.mockResolvedValue(null);
+    bcrypt.hash.mockResolvedValue("hashed-password");
+    User.create.mockResolvedValue({ _id: "user123", email: payload.email });
+    userQueue.add.mockResolvedValue(true);
+
     const res = await request(app).post("/api/auth/register").send(payload);
 
     expect(res.status).toBe(200);
     expect(res.body).toEqual({ message: "user registered successfully" });
+
+    expect(userQueue.add).toHaveBeenCalledWith("init new profile", {
+      userId: "user123",
+      email: payload.email,
+    });
   });
 });
