@@ -4,7 +4,7 @@ export const verifyToken = async (req, res, next) => {
   const authHeader = req.header("Authorization");
 
   try {
-    if (!authHeader || !authHeader.startswith("Bearer "))
+    if (!authHeader || !authHeader.startsWith("Bearer "))
       return res.status(403).json({ error: "no token provided" });
 
     const token = authHeader.split(" ")[1];

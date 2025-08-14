@@ -23,12 +23,12 @@ const cerSchema = new mongoose.Schema(
       type: Date,
       required: true,
     },
-    credID: {
+    credId: {
         type: String,
     },
     credUrl: {
         type: String,
-        required: true
+        // required: true
     }
   },
   {
