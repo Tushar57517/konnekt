@@ -1,5 +1,5 @@
 import request from "supertest";
-import { describe, jest } from "@jest/globals";
+import { describe, it, jest } from "@jest/globals";
 
 jest.unstable_mockModule("../middlewares/auth.middleware.js", () => ({
   verifyToken: (req, res, next) => {
@@ -15,6 +15,7 @@ jest.unstable_mockModule("../models/certificate.model.js", () => ({
     find: jest.fn(),
     findById: jest.fn(),
     findByIdAndUpdate: jest.fn(),
+    deleteOne: jest.fn().mockResolvedValue({})
   },
 }));
 
@@ -48,7 +49,7 @@ describe("Certificates Routes", () => {
         issueDate: "2024-01-01",
         expDate: "2025-01-01",
       })
-      .set("Authorization", "Bearer faketoken"); 
+      .set("Authorization", "Bearer faketoken");
 
     expect(res.statusCode).toBe(201);
     expect(res.body.certificate.name).toBe("Test Cert");
@@ -69,5 +70,75 @@ describe("Certificates Routes", () => {
 
     expect(res.statusCode).toBe(200);
     expect(res.body[0].name).toBe("Cert 1");
+  });
+
+  it("GET /api/certificates/id/:certId - returns one certificate", async () => {
+    const mockCert = { _id: 123, name: "cert name" };
+
+    Certificate.findById.mockResolvedValue(mockCert);
+
+    const res = await request(app)
+      .get("/api/certificates/id/123")
+      .set("Authorization", "Bearer faketoken");
+
+    expect(res.status).toBe(200);
+    expect(res.body.name).toBe("cert name");
+  });
+
+  it("PATCH /api/certificates/update/:certId", async () => {
+    const updatedCert = {
+      _id: "cert123",
+      name: "Updated Cert",
+      org: "Updated Org",
+    };
+
+    Certificate.findByIdAndUpdate.mockResolvedValue(updatedCert);
+
+    const res = await request(app)
+      .patch("/api/certificates/update/cert123")
+      .send({ name: "Updated Cert", org: "Updated Org" })
+      .set("Authorization", "Bearer faketoken");
+
+    expect(res.status).toBe(200);
+    expect(res.body.message).toBe("certification updated");
+    expect(res.body.certificate).toEqual(updatedCert);
+    expect(Certificate.findByIdAndUpdate).toHaveBeenCalledWith(
+      "cert123",
+      { name: "Updated Cert", org: "Updated Org" },
+      { runValidators: true, new: true }
+    );
+  });
+
+  it("DELETE /api/certificates/delete/:certId - deletes a certificate", async () => {
+    const mockProfile = {
+      _id: "profile123",
+      user: "mockUserId",
+    };
+
+    const mockCert = {
+      _id: "cert123",
+      profile: "profile123",
+      deleteOne: jest.fn().mockResolvedValue({}),
+    };
+
+    Certificate.findById.mockResolvedValue(mockCert);
+
+    Profile.findById.mockResolvedValue(mockProfile);
+
+    Profile.findByIdAndUpdate.mockResolvedValue({});
+
+    const res = await request(app)
+      .delete("/api/certificates/delete/cert123")
+      .set("Authorization", "Bearer faketoken");
+
+    expect(res.status).toBe(200);
+    expect(res.body.message).toBe("certification deleted successfully");
+
+    expect(Certificate.findById).toHaveBeenCalledWith("cert123");
+    expect(Profile.findById).toHaveBeenCalledWith("profile123");
+    expect(mockCert.deleteOne).toHaveBeenCalled();
+    expect(Profile.findByIdAndUpdate).toHaveBeenCalledWith("profile123", {
+      $pull: { Certificates: "cert123" },
+    });
   });
 });
