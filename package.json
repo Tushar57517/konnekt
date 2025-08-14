@@ -3,7 +3,8 @@
   "private": true,
   "scripts": {
     "start": "turbo run start",
-    "dev": "turbo run dev"
+    "dev": "turbo run dev",
+    "test": "turbo run test"
   },
   "devDependencies": {
     "prettier": "^3.6.2",
