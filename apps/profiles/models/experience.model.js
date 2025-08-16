@@ -7,7 +7,7 @@ const expSchema = new mongoose.Schema(
       required: true,
       ref:"Profile"
     },
-    jobTitle: {
+    title: {
       type: String,
       required: true,
     },
